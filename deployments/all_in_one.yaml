@@ -62,8 +62,6 @@ spec:
       labels:
         app: web-app
         tier: frontend
-      annotations:
-        vpc.amazonaws.com/pod-eni: "true"
     spec:
       containers:
       - name: web
@@ -113,8 +111,6 @@ spec:
       labels:
         app: api-app
         tier: backend
-      annotations:
-        vpc.amazonaws.com/pod-eni: "true"
     spec:
       containers:
       - name: api
@@ -165,8 +161,6 @@ spec:
       labels:
         app: db-app
         tier: database
-      annotations:
-        vpc.amazonaws.com/pod-eni: "true"
     spec:
       containers:
       - name: database
@@ -216,8 +210,6 @@ spec:
     metadata:
       labels:
         app: nginx
-      annotations:
-        vpc.amazonaws.com/pod-eni: "true"
     spec:
       containers:
       - name: nginx
