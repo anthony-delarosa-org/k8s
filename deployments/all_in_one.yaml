@@ -199,21 +199,22 @@ spec:
 # TEST POD
 # =============================================================================
 
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: nginx
+  namespace: test
   labels:
     app: nginx
-  name: nginx
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: nginx
-  strategy: {}
   template:
     metadata:
-      creationTimestamp: null
       labels:
         app: nginx
       annotations:
@@ -222,5 +223,3 @@ spec:
       containers:
       - image: nginx
         name: nginx
-        resources: {}
-status: {}
