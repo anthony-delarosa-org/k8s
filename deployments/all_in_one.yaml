@@ -206,7 +206,7 @@ metadata:
   name: nginx
   namespace: test
   labels:
-    app:nginx
+    app: nginx
 spec:
   replicas: 1
   selector:
