@@ -9,7 +9,6 @@ spec:
   podSelector: {}
   policyTypes:
   - Ingress
-  - Egress
 
 ---
 # Default deny-all policy for backend namespace
@@ -22,7 +21,6 @@ spec:
   podSelector: {}
   policyTypes:
   - Ingress
-  - Egress
 
 ---
 # Default deny-all policy for database namespace
