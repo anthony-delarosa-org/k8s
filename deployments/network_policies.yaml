@@ -3,58 +3,6 @@
 # =============================================================================
 
 ---
-# Default deny-all policy for frontend namespace
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: default-deny-all
-  namespace: frontend
-spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
-
----
-# Default deny-all policy for backend namespace
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: default-deny-all
-  namespace: backend
-spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
-
----
-# Default deny-all policy for database namespace
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: default-deny-all
-  namespace: database
-spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
-
----
-# Default deny-all policy for test namespace
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: default-deny-all
-  namespace: test
-spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
-
----
 # Allow web tier to access API tier across namespaces
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -120,33 +68,6 @@ spec:
     ports:
     - protocol: TCP
       port: 5432
-  # Allow DNS resolution
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          name: kube-system
-    ports:
-    - protocol: UDP
-      port: 53
-
----
-# Allow ingress to web tier (from internet/load balancer)
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-web-ingress
-  namespace: frontend
-spec:
-  podSelector:
-    matchLabels:
-      tier: frontend
-  policyTypes:
-  - Ingress
-  ingress:
-  - from: []
-    ports:
-    - protocol: TCP
-      port: 80
 
 ---
 # Allow ingress to API tier (only from frontend namespace)
