@@ -207,7 +207,7 @@ metadata:
   name: nginx
   namespace: test
   labels:
-    app: nginx
+    app:nginx
 spec:
   replicas: 1
   selector:
@@ -221,5 +221,5 @@ spec:
         vpc.amazonaws.com/pod-eni: "true"
     spec:
       containers:
-      - image: nginx
-        name: nginx
+      - name: nginx
+        image: nginx:alpine
