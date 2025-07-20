@@ -6,7 +6,7 @@ metadata:
 rules:
 - apiGroups: [""]
   resources: ["secrets"]
-  verbs: ["get"]
+  verbs: ["get", "list"]
 ---
 # ClusterRoleBinding to grant access to all namespaces
 apiVersion: rbac.authorization.k8s.io/v1
