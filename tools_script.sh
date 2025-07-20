@@ -79,21 +79,39 @@ else
     eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" 2>/dev/null || true
 fi
 
+# 7.1. Install bash-completion via Homebrew
+print_status "Installing bash-completion..."
+brew install bash-completion
+echo >> /home/ubuntu/.bashrc
+echo '# Enable bash-completion' >> /home/ubuntu/.bashrc
+echo '[[ -r "/home/linuxbrew/.linuxbrew/etc/profile.d/bash_completion.sh" ]] && . "/home/linuxbrew/.linuxbrew/etc/profile.d/bash_completion.sh"' >> /home/ubuntu/.bashrc
+
 # 8. Install Docker
 print_status "Installing Docker..."
 if ! command_exists docker; then
     sudo apt install -y docker.io
     sudo gpasswd -a $USER docker
     
-    # Setup Docker completion
-    mkdir -p ~/.bash_completion.d
-    docker completion bash > ~/.bash_completion.d/docker 2>/dev/null || true
-    echo 'source ~/.bash_completion.d/docker' >> ~/.bashrc
-    
     print_warning "Docker installed. You may need to log out and back in for group changes to take effect."
 else
     print_status "Docker already installed"
 fi
+
+# Install Docker CLI via Homebrew for better completion support
+print_status "Installing Docker CLI via Homebrew..."
+brew install docker
+
+# Setup Docker completion
+print_status "Setting up Docker bash completion..."
+mkdir -p ~/.bash_completion.d
+echo >> /home/ubuntu/.bashrc
+echo '# Docker completion' >> /home/ubuntu/.bashrc
+echo 'if [ -f ~/.bash_completion.d/docker ]; then' >> /home/ubuntu/.bashrc
+echo '    source ~/.bash_completion.d/docker' >> /home/ubuntu/.bashrc
+echo 'fi' >> /home/ubuntu/.bashrc
+
+# Generate Docker completion
+docker completion bash > ~/.bash_completion.d/docker 2>/dev/null || true
 
 # 9. Install Trivy via Homebrew
 print_status "Installing Trivy..."
@@ -122,13 +140,33 @@ fi
 print_status "Installing kubectl..."
 if ! command_exists kubectl; then
     brew install kubectl
-    
-    # Setup kubectl completion
-    kubectl completion bash > ~/.bash_completion.d/kubectl 2>/dev/null || true
-    echo 'source ~/.bash_completion.d/kubectl' >> ~/.bashrc
     print_status "kubectl installed: $(which kubectl)"
 else
     print_status "kubectl already installed: $(which kubectl)"
+fi
+
+# Setup kubectl completion
+print_status "Setting up kubectl bash completion..."
+mkdir -p ~/.bash_completion.d
+
+# Generate kubectl completion (using the working approach)
+if command_exists kubectl; then
+    kubectl completion bash > ~/.bash_completion.d/kubectl 2>/dev/null && \
+    print_status "kubectl completion file generated successfully" || \
+    print_warning "Failed to generate kubectl completion file"
+    
+    # Add direct source to bashrc (this is the working method)
+    echo 'source ~/.bash_completion.d/kubectl' >> ~/.bashrc
+    print_status "kubectl completion added to ~/.bashrc"
+    
+    # Verify the completion file was created and has content
+    if [ -s ~/.bash_completion.d/kubectl ]; then
+        print_status "kubectl completion file verified"
+    else
+        print_warning "kubectl completion file is empty or missing"
+    fi
+else
+    print_error "kubectl not found in PATH, cannot generate completion"
 fi
 
 # 12. Source bashrc to apply changes
@@ -156,6 +194,7 @@ echo "1. You may need to log out and back in for Docker group changes to take ef
 echo "2. Run 'source ~/.bashrc' or open a new terminal to ensure all PATH changes are loaded"
 echo "3. The hostname change will persist until reboot unless you also update /etc/hostname"
 echo "4. If 'which aws/kubectl/trivy' returns nothing, run: eval \"\$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)\""
+echo "5. If kubectl completion doesn't work, try: kubectl completion bash > ~/.bash_completion.d/kubectl && source ~/.bashrc"
 echo ""
 
 print_status "Script execution completed!"
