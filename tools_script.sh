@@ -58,7 +58,7 @@ sudo apt update -y
 
 # 5. Install basic tools and build dependencies
 print_status "Installing basic tools and build dependencies..."
-sudo apt install -y ca-certificates curl gnupg lsb-release git jq vim build-essential gcc
+sudo apt install -y ca-certificates curl gnupg lsb-release git jq vim build-essential gcc  net-tools
 
 # 6. Set password for ubuntu user (interactive)
 print_warning "You will be prompted to set a password for the ubuntu user:"
