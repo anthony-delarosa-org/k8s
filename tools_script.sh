@@ -1,0 +1,161 @@
+#!/bin/bash
+
+# Ubuntu Bastion Host Setup Script
+# This script automates the installation and configuration of development tools
+
+set -e  # Exit on any error
+
+echo "======================================"
+echo "Ubuntu Bastion Host Setup Script"
+echo "======================================"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_status() {
+    echo -e "${GREEN}[INFO]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# Function to check if command exists
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+print_status "Starting Ubuntu bastion host setup..."
+
+# 1. Configure vim
+print_status "Configuring vim..."
+cat > ~/.vimrc << 'EOF'
+set nu
+set paste
+set cursorline
+set cursorcolumn
+EOF
+
+# 2. Set EDITOR environment variable
+print_status "Setting EDITOR environment variable..."
+echo 'export EDITOR=/usr/bin/vim' >> ~/.bashrc
+
+# 3. Set hostname (requires sudo)
+print_status "Setting hostname to 'bastion'..."
+sudo hostname bastion
+
+# 4. Update package manager
+print_status "Updating package manager..."
+sudo apt update -y
+
+# 5. Install basic tools and build dependencies
+print_status "Installing basic tools and build dependencies..."
+sudo apt install -y ca-certificates curl gnupg lsb-release git jq vim build-essential gcc
+
+# 6. Set password for ubuntu user (interactive)
+print_warning "You will be prompted to set a password for the ubuntu user:"
+sudo passwd ubuntu
+
+# 7. Install Homebrew
+print_status "Installing Homebrew..."
+if ! command_exists brew; then
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    
+    # Add Homebrew to PATH
+    echo >> /home/ubuntu/.bashrc
+    echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> /home/ubuntu/.bashrc
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+else
+    print_status "Homebrew already installed"
+    # Make sure brew is available in current session even if already installed
+    eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" 2>/dev/null || true
+fi
+
+# 8. Install Docker
+print_status "Installing Docker..."
+if ! command_exists docker; then
+    sudo apt install -y docker.io
+    sudo gpasswd -a $USER docker
+    
+    # Setup Docker completion
+    mkdir -p ~/.bash_completion.d
+    docker completion bash > ~/.bash_completion.d/docker 2>/dev/null || true
+    echo 'source ~/.bash_completion.d/docker' >> ~/.bashrc
+    
+    print_warning "Docker installed. You may need to log out and back in for group changes to take effect."
+else
+    print_status "Docker already installed"
+fi
+
+# 9. Install Trivy via Homebrew
+print_status "Installing Trivy..."
+if ! command_exists trivy; then
+    # Install gcc via brew as backup if system gcc isn't sufficient
+    print_status "Installing gcc via Homebrew for Trivy compilation..."
+    brew install gcc || true
+    
+    print_status "Installing Trivy (this may take a while as it compiles from source)..."
+    brew install aquasecurity/trivy/trivy
+    print_status "Trivy installed: $(which trivy)"
+else
+    print_status "Trivy already installed: $(which trivy)"
+fi
+
+# 10. Install AWS CLI via Homebrew
+print_status "Installing AWS CLI..."
+if ! command_exists aws; then
+    brew install awscli
+    print_status "AWS CLI installed: $(which aws)"
+else
+    print_status "AWS CLI already installed: $(which aws)"
+fi
+
+# 11. Install kubectl via Homebrew
+print_status "Installing kubectl..."
+if ! command_exists kubectl; then
+    brew install kubectl
+    
+    # Setup kubectl completion
+    kubectl completion bash > ~/.bash_completion.d/kubectl 2>/dev/null || true
+    echo 'source ~/.bash_completion.d/kubectl' >> ~/.bashrc
+    print_status "kubectl installed: $(which kubectl)"
+else
+    print_status "kubectl already installed: $(which kubectl)"
+fi
+
+# 12. Source bashrc to apply changes
+print_status "Reloading bash configuration..."
+source ~/.bashrc 2>/dev/null || true
+
+echo ""
+print_status "======================================"
+print_status "Setup completed successfully!"
+print_status "======================================"
+echo ""
+
+# Display installed versions
+print_status "Installed tool versions:"
+echo "Git: $(git --version 2>/dev/null || echo 'Not found')"
+echo "Docker: $(docker --version 2>/dev/null || echo 'Not found - may need to re-login')"
+echo "Brew: $(brew --version 2>/dev/null | head -1 || echo 'Not found')"
+echo "Trivy: $(trivy --version 2>/dev/null || echo 'Not found')"
+echo "AWS CLI: $(aws --version 2>/dev/null || echo 'Not found')"
+echo "kubectl: $(kubectl version --client --short 2>/dev/null || echo 'Not found')"
+
+echo ""
+print_warning "Important notes:"
+echo "1. You may need to log out and back in for Docker group changes to take effect"
+echo "2. Run 'source ~/.bashrc' or open a new terminal to ensure all PATH changes are loaded"
+echo "3. The hostname change will persist until reboot unless you also update /etc/hostname"
+echo "4. If 'which aws/kubectl/trivy' returns nothing, run: eval \"\$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)\""
+echo ""
+
+print_status "Script execution completed!"
